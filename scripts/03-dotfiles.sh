@@ -1,6 +1,15 @@
 #!/bin/bash
 # 03-dotfiles.sh
 # Install dotfiles from private config repo or use defaults
+#
+# How it works:
+# - Looks for your-private-config/dotfiles/*
+# - Each file needs a header comment:
+#     # BOOTSTRAP_DEST: ~/.zshrc
+#     # BOOTSTRAP_BACKUP: true
+#     <your actual file content>
+# - Script reads the headers, copies to destination, strips headers
+# - If no private repo, creates minimal defaults
 
 set -e
 
@@ -17,7 +26,7 @@ if [ "$HAS_PRIVATE_CONFIG" = true ] && [ -d "$PRIVATE_CONFIG_DIR/dotfiles" ]; th
         if [ -f "$file" ]; then
             filename=$(basename "$file")
 
-            # Extract destination from file header
+            # Extract destination from file header (e.g., # BOOTSTRAP_DEST: ~/.zshrc)
             dest=$(grep "^# BOOTSTRAP_DEST:" "$file" | head -1 | sed 's/^# BOOTSTRAP_DEST: //')
             backup=$(grep "^# BOOTSTRAP_BACKUP:" "$file" | head -1 | sed 's/^# BOOTSTRAP_BACKUP: //')
 
@@ -34,7 +43,7 @@ if [ "$HAS_PRIVATE_CONFIG" = true ] && [ -d "$PRIVATE_CONFIG_DIR/dotfiles" ]; th
                 # Create directory if needed
                 mkdir -p "$(dirname "$dest")"
 
-                # Copy file (removing header lines)
+                # Copy file (removing header lines so they don't end up in your actual dotfiles)
                 echo "  Installing $filename → $dest"
                 grep -v "^# BOOTSTRAP_" "$file" > "$dest"
             else

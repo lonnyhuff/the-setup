@@ -1,6 +1,20 @@
 #!/bin/bash
 # 04-private-setup.sh
 # Run setup scripts from private config repo (GAM, secrets, etc.)
+#
+# How it works:
+# - Looks for your-private-config/scripts/01-*.sh, 02-*.sh, etc.
+# - Runs them in order
+# - Scripts have access to: $HOME, $PRIVATE_CONFIG_DIR, and `op` command (1Password CLI)
+#
+# Example script (01-gam-setup.sh):
+#   OP_ITEM_ID="your-item-id"
+#   OP_VAULT="your-vault"
+#   mkdir -p ~/bin/gam7
+#   op document get "$OP_ITEM_ID" --vault "$OP_VAULT" > ~/bin/gam7/oauth2.txt
+#   chmod 600 ~/bin/gam7/oauth2.txt
+#
+# Key: store secrets in 1Password, pull them at setup time, never commit them to git
 
 set -e
 
@@ -13,9 +27,6 @@ PRIVATE_SCRIPTS_DIR="$PRIVATE_CONFIG_DIR/scripts"
 if [ "$HAS_PRIVATE_CONFIG" != true ] || [ ! -d "$PRIVATE_CONFIG_DIR" ]; then
     echo "⚠ No private config repository found"
     echo "  Skipping private setup scripts"
-    echo ""
-    echo "  If you have sensitive setup steps (GAM, secrets, etc.),"
-    echo "  create a private repo with a scripts/ directory"
     exit 0
 fi
 
@@ -41,7 +52,6 @@ done
 
 if [ $script_count -eq 0 ]; then
     echo "⚠ No numbered scripts found in $PRIVATE_SCRIPTS_DIR"
-    echo "  Create scripts like: 01-gam-setup.sh, 02-aws-setup.sh, etc."
 else
     echo ""
     echo "✓ Ran $script_count private setup script(s)"
